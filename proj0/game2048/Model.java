@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author TODO: YOUR NAME HERE (YX)
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -113,6 +113,46 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+
+        for (int col = 0; col < board.size(); col += 1) {
+            for (int row = board.size() - 1; row >= 0; row -= 1) {
+                Tile t1 = board.tile(col, row);
+                if (t1 != null) {
+                    for (int row2 = row - 1; row2 >= 0; row2 -= 1) {
+                        Tile t2 = board.tile(col, row2);
+                        if (t2 != null) {
+                            if (t1.value() == t2.value()) {
+                                board.move(col, row, t2);
+                                score += t1.value() * 2;
+                                changed = true;
+                                row = row2;
+                            }break;
+                        }else {
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int col = 0; col < board.size(); col += 1) {
+            for (int row = board.size() - 1; row >= 0; row -= 1) {
+                Tile t1 = board.tile(col, row);
+                if (t1 == null) {
+                    for (int row2 = row - 1; row2 >= 0; row2 -= 1) {
+                        Tile t2 = board.tile(col, row2);
+                        if (t2 != null) {
+                            board.move(col, row, t2);
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
@@ -120,6 +160,7 @@ public class Model extends Observable {
         }
         return changed;
     }
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -138,6 +179,17 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        if (b == null) {
+            return false;
+        }
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                Tile t = b.tile(col, row);
+                if (t == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +200,17 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        if (b == null) {
+            return false;
+        }
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                Tile t = b.tile(col, row);
+                if (t != null && t.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +222,32 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (b == null) {
+            return false;
+        }
+        if (emptySpaceExists(b)) {
+            return true;
+        }
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                Tile t = b.tile(col, row);
+                if (t != null) {
+                    if (col + 1 < b.size()) {
+                        Tile t1 = b.tile(col + 1, row);
+                        if (t1 != null && t1.value() == t.value()) {
+                            return true;
+                        }
+                    }
+                    if (row + 1 < b.size()) {
+                        Tile t1 = b.tile(col, row + 1);
+                        if (t1 != null && t1.value() == t.value()) {
+                            return true;
+                        }
+                    }
+                }
+
+            }
+        }
         return false;
     }
 
@@ -201,3 +290,5 @@ public class Model extends Observable {
         return toString().hashCode();
     }
 }
+
+
