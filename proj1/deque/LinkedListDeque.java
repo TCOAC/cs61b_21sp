@@ -181,3 +181,4 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         System.out.println(lld1.equals(ad1));
     }
 }
+
