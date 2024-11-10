@@ -22,6 +22,7 @@ public class TimeAList {
     }
 
     public static void timeAListConstruction() {
+
         AList<Integer> N = new AList<>();
         AList<Integer> Ns = new AList<>();
         AList<Double> times = new AList<>();
@@ -30,7 +31,7 @@ public class TimeAList {
         Stopwatch sw = new Stopwatch();
         int tick = 0;
         int ops = 0;
-        for (int i = 0; i < 1024000; i += 1) {
+        for (int i = 0; i < 128000; i += 1) {
             N.addLast(i);
             ops += 1;
             if (N.size() == Math.pow(2, tick) * 1000) {
