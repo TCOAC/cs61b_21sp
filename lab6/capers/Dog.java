@@ -2,6 +2,7 @@ package capers;
 
 import java.io.File;
 import java.io.Serializable;
+import java.io.IOException;
 import static capers.Utils.*;
 
 /** Represents a dog that can be serialized.
@@ -40,7 +41,8 @@ public class Dog implements Serializable {
      */
     public static Dog fromFile(String name) {
         // TODO (hint: look at the Utils file)
-        return null;
+        File dogFile = Utils.join(DOG_FOLDER, name);
+        return Utils.readObject(dogFile, Dog.class);
     }
 
     /**
@@ -57,6 +59,8 @@ public class Dog implements Serializable {
      */
     public void saveDog() {
         // TODO (hint: don't forget dog names are unique)
+        File dogFile = Utils.join(DOG_FOLDER, name);
+        Utils.writeObject(dogFile, this);
     }
 
     @Override
