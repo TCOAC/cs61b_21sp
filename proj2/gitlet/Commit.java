@@ -1,153 +1,198 @@
 package gitlet;
 
-// TODO: any imports you need here
-
 import java.io.File;
-import java.io.Serializable;
-import java.text.DateFormat;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
-import static gitlet.MyUtiles.mkdir;
-import static gitlet.Repository.CWD;
-import static gitlet.Repository.OBJECT_DIR;
-import static gitlet.Stage.getBlobByID;
 import static gitlet.Utils.join;
-import static gitlet.Utils.writeObject;
 
-import java.util.Date; // TODO: You'll likely use this in this class
-
-/**
- * Represents a gitlet commit object.
- * TODO: It's a good idea to give a description here of what else this Class
- * does at a high level.
- * <p>
- * * author
+/** Represents a gitlet commit object.
+ *  @author CuiYuXin
  */
-public class Commit implements Serializable{
-    /**
-     * TODO: add instance variables here.
-     *
-     * List all instance variables of the Commit class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided one example for `message`.
-     */
+public class Commit implements Serializable {
 
+    /** The current working directory. */
+    public static final File CWD = new File(System.getProperty("user.dir"));
+    /** The commit directory. */
+    public static final File COMMIT_DIR = join(CWD, ".gitlet", "commits");
     /** The message of this Commit. */
-    private String message;
+    private String message = "";
+    /** The SHA1 of parent. */
+    private String parent = "";
+    /** The SHA1 of parent2. */
+    private String parent2 = "";
+    /** The TimeStamp of this Commit. */
+    private Date timeStamp = new Date();
+    /** The commit map. Key:filename Value:SHA1 */
+    Map<String, String> commmitMap = new java.util.HashMap<>();
 
-    private Map<String, String> pathToBlobID = new HashMap<>();
-
-    private List<String> parents;
-
-    private Date currentTime;
-
-    private String id;
-
-    private File commitSaveFileName;
-
-    private String timeStamp;
-
-    /* TODO: fill in the rest of this class. */
-
-    public Commit(String message, Map<String, String> pathToBlobID, List<String> parents) {
+    /** Constructor
+     *  @author CuiYuxin
+     */
+    public Commit(String message, String parent, String parent2, Map<String, String> commmitMap) {
         this.message = message;
-        this.pathToBlobID = pathToBlobID;
-        this.parents = parents;
-        this.currentTime = new Date();
-        this.timeStamp = dateToTimeStamp(this.currentTime);
-        this.id = generateID();
-        this.commitSaveFileName = generateFileName();
+        this.parent = parent;
+        this.parent2 = parent2;
+        this.timeStamp.getTime();
+        this.commmitMap = commmitMap;
     }
 
+    /** Constructor
+     *  @author CuiYuxin
+     */
     public Commit() {
-        this.currentTime = new Date(0);
-        this.timeStamp = dateToTimeStamp(this.currentTime);
+    }
+
+    /** Init first commit
+     *  @author CuiYuxin
+     */
+    public void initCommit() {
         this.message = "initial commit";
-        this.pathToBlobID = new HashMap<>();
-        this.parents = new ArrayList<>();
-        this.id = generateID();
-        this.commitSaveFileName = generateFileName();
+        this.parent = "";
+        this.parent2 = "";
+        this.timeStamp.setTime(0);
     }
 
-    private static String dateToTimeStamp(Date date) {
-        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
-        return dateFormat.format(date);
+//    /** Return the message
+//     *  @author CuiYuxin */
+//    public String getMessage() {
+//        return message;
+//    }
+
+    /** Return the parent1
+     *  @author CuiYuxin
+     */
+    public String getParent() {
+        return parent;
     }
 
-    public String getMessage() {
-        return message;
+//    /** Return the parent2
+//     *  @author CuiYuxin */
+//    public String getParent2() {
+//        return parent2;
+//    }
+//
+//    /** Return the timestamp
+//     *  @author CuiYuxin */
+//    public Date getTimeStamp() {
+//        return timeStamp;
+//    }
+
+    /** Return the Map<String,String>
+     *  @author CuiYuxin
+     */
+    public Map<String, String> getBlobs() {
+        return commmitMap;
     }
 
-    public String getTimeStamp() {
-        return timeStamp;
-    }
-
-    public Map<String, String> getPathToBlobID() {
-        return pathToBlobID;
-    }
-
-    public List<String> getBlobIDList() {
-        List<String> list = new ArrayList<>(pathToBlobID.values());
-        return list;
-    }
-
-    public List<String> getParentsCommitID() {
-        return parents;
-    }
-
-    public Date getCurrentTime() {
-        return currentTime;
-    }
-
-    public String getID() {
-        return id;
-    }
-
-    private String generateTimeStamp() {
-        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy z", Locale.CHINA);
-        return dateFormat.format(currentTime);
-    }
-
-    private String generateID() {
-        return Utils.sha1(generateTimeStamp(), message, parents.toString(), pathToBlobID.toString());
-    }
-
-    private File generateFileName() {
-        return join(OBJECT_DIR, id);
-    }
-
-    public void save() {
-        writeObject(commitSaveFileName, this);
-    }
-
-    public boolean exists(String filePath) {
-        return pathToBlobID.containsKey(filePath);
-    }
-
-    public List<String> getFileNames() {
-        List<String> fileName = new ArrayList<>();
-        List<Blob> blobList = getBlobList();
-        for (Blob b : blobList) {
-            fileName.add(b.getFileName());
+    /** Write this Commit and return the filename(SHA1)
+     *  @author CuiYuxin
+     */
+    public String write() {
+        if (!COMMIT_DIR.exists()) {
+            COMMIT_DIR.mkdir();
         }
-        return fileName;
-    }
-
-    private List<Blob> getBlobList() {
-        Blob blob;
-        List<Blob> blobList = new ArrayList<>();
-        for (String id : pathToBlobID.values()) {
-            blob = getBlobByID(id);
-            blobList.add(blob);
+        String sha1 = Utils.sha1(Utils.serialize(this));
+        String sp = File.separator;
+        File commitFile = new File(".gitlet" + sp + "commits" + sp + sha1);
+        if (!commitFile.exists()) {
+            try {
+                commitFile.createNewFile();
+            } catch (IOException e) {
+                //e.printStackTrace();
+            }
         }
-        return blobList;
+        Utils.writeObject(commitFile, this);
+        return sha1;
     }
 
-    public Blob getBlobByFileName(String fileName) {
-        File file = join(CWD, fileName);
-        String path = file.getPath();
-        String blobID = pathToBlobID.get(path);
-        return getBlobByID(blobID);
+    /** Read commit.
+     *  @author CuiYuxin */
+    public static Commit read(String sha1) {
+        if (sha1.length() == 8) {
+            for (String fileName : Utils.plainFilenamesIn(COMMIT_DIR)) {
+                if (fileName.substring(0, 8).equals(sha1)) {
+                    sha1 = fileName;
+                    break;
+                }
+            }
+        }
+        String sp = File.separator;
+        File commitFile = new File(".gitlet" + sp + "commits" + sp + sha1);
+        if (!commitFile.exists()) {
+            return null;
+        }
+        return Utils.readObject(commitFile, Commit.class);
+    }
+
+    /** Return the commit log
+     *  @author CuiYuxin
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("===\n");
+        // SHA1
+        sb.append("commit ").append(Utils.sha1(Utils.serialize(this))).append("\n");
+        // Merge
+        if (!parent2.equals("")) {
+            sb.append("Merge: ").append(parent.substring(0, 7)).append(" ");
+            sb.append(parent2.substring(0, 7)).append("\n");
+        }
+        // TimeStamp
+        sb.append("Date: ");
+        SimpleDateFormat format = new SimpleDateFormat("E MMM dd HH:mm:ss yyyy Z");
+        sb.append(format.format(timeStamp)).append("\n");
+        // Message
+        sb.append(message).append("\n");
+        return sb.toString();
+    }
+
+    /** Return the commit ID which has the given message
+     *  @author CuiYuxin
+     */
+    public static List<String> find(String message) {
+        List<String> commitID = new ArrayList<>();
+        List<String> commits = Utils.plainFilenamesIn(COMMIT_DIR);
+        for (String commit : commits) {
+            Commit cmt = read(commit);
+            if (cmt.message.equals(message)) {
+                commitID.add(Utils.sha1(Utils.serialize(cmt)));
+            }
+        }
+        return commitID;
+    }
+
+    /** Create new Blobs
+     * @author CuiYuxin
+     */
+    public static Map<String, String> mergeBlobs(Stage stage, Commit oldCmt) {
+        Map<String, String> map = oldCmt.getBlobs();
+        for (String rm : stage.getRemoveFile()) {
+            map.remove(rm);
+        }
+        // Map遍历
+        for (Map.Entry<String, String> entry : stage.getBlobmap().entrySet()) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+        return map;
+    }
+
+    /** Return all commit log
+     * @author CuiYuxin
+     */
+    public static List<String> getCommitLog() {
+        List<String> commits = Utils.plainFilenamesIn(COMMIT_DIR);
+        List<String> commitLog = new ArrayList<>();
+        for (String commit : commits) {
+            Commit cmt = read(commit);
+            commitLog.add(cmt.toString());
+        }
+        return commitLog;
     }
 }
